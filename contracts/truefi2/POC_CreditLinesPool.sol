@@ -34,7 +34,7 @@ contract CreditLinesPool is TrueFiPool2 {
     }
 
     function poolValue() public override view returns (uint256) {
-        return super.poolValue().add(totalInterest());
+        return super.poolValue().add(totalInterest()).add(cp.totalBorrowed);
     }
 
     function utilization() public view returns (uint16) {
@@ -85,18 +85,20 @@ contract CreditLinesPool is TrueFiPool2 {
         checkpoint();
     }
 
-    function borrowCreditLine(uint256 amount) external {
-        if (cp.borrowed[msg.sender] == 0) {
-            cp.borrowers.push(msg.sender);
+    function borrowCreditLine(uint256 amount, address borrower) external {
+        if (cp.borrowed[borrower] == 0) {
+            cp.borrowers.push(borrower);
         }
-        cp.borrowed[msg.sender] += amount;
+        cp.borrowed[borrower] += amount;
         cp.totalBorrowed += amount;
+        token.transfer(borrower, amount);
         checkpoint();
     }
 
-    function returnCreditLine(uint256 amount) external {
-        cp.borrowed[msg.sender] = cp.borrowed[msg.sender].sub(amount);
+    function returnCreditLine(uint256 amount, address borrower) external {
+        cp.borrowed[borrower] = cp.borrowed[borrower].sub(amount);
         cp.totalBorrowed = cp.totalBorrowed.sub(amount);
+        token.transferFrom(borrower, msg.sender, amount);
         checkpoint();
     }
 }

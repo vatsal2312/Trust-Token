@@ -69,7 +69,7 @@ describe('Credit lines POC', () => {
   })
 
   it('test', async () => {
-    await creditLinesPool.connect(borrower).borrowCreditLine(parseEth(1e6))
+    await creditLinesPool.borrowCreditLine(parseEth(1e6), borrower.address)
     console.log((await creditLinesPool.interest(borrower.address)).toString())
     console.log((await creditLinesPool.rate(borrower.address)).toString())
     console.log((await creditLinesPool.utilization()).toString())
@@ -77,9 +77,18 @@ describe('Credit lines POC', () => {
     console.log((await creditLinesPool.interest(borrower.address)).toString())
     console.log((await creditLinesPool.rate(borrower.address)).toString())
     console.log((await creditLinesPool.utilization()).toString())
+    await creditLinesPool.checkpoint()
     await timeTravel(1000)
     console.log((await creditLinesPool.interest(borrower.address)).toString())
     console.log((await creditLinesPool.rate(borrower.address)).toString())
     console.log((await creditLinesPool.utilization()).toString())
   })
+
+  it('HEAVY TEST', async () => {
+    for (let i = 1; i < 50; i++) {
+      await creditLinesPool.borrowCreditLine(parseEth(1e5), Wallet.createRandom().address)
+    }
+    const tx = await (await creditLinesPool.checkpoint()).wait()
+    console.log(tx.gasUsed.toString())
+  }).timeout(1000000000)
 })
