@@ -20,7 +20,7 @@ contract CreditLinesPool is TrueFiPool2 {
         uint256 totalBorrowed;
         address[] borrowers;
     }
-    Checkpoint cp;
+    Checkpoint public cp;
 
     function interest(address borrower) public view returns (uint256) {
         return
@@ -38,7 +38,8 @@ contract CreditLinesPool is TrueFiPool2 {
     }
 
     function utilization() public view returns (uint16) {
-        return uint16((totalInterest().add(cp.totalBorrowed)).mul(10000).div(cp.poolValue));
+        uint256 t_interest = totalInterest();
+        return uint16((t_interest.add(cp.totalBorrowed)).mul(10000).div(cp.poolValue + t_interest - cp.totalInterest));
     }
 
     function utilizationAdjustment(uint16 util) public pure returns (uint16) {
@@ -56,11 +57,12 @@ contract CreditLinesPool is TrueFiPool2 {
         uint256 totalPendingInterest;
         for (uint16 i = 0; i < cp.borrowers.length; i++) {
             address borrower = cp.borrowers[i];
-            uint256 pendingInterest = uint256(cp.rates[borrower]).mul(cp.borrowed[borrower]);
+            uint16 borrowerRate = rate(borrower);
+            uint256 pendingInterest = uint256(borrowerRate).mul(cp.borrowed[borrower]);
             cp.interests[borrower] = cp.interests[borrower].add(pendingInterest.mul(block.timestamp - cp.timestamp).div(365 days));
             totalPendingInterest += pendingInterest;
             interestTotal += cp.interests[borrower];
-            cp.rates[borrower] = rate(borrower);
+            cp.rates[borrower] = borrowerRate;
         }
         cp.totalInterest = interestTotal;
         cp.poolValue = poolValue();
@@ -84,7 +86,7 @@ contract CreditLinesPool is TrueFiPool2 {
     }
 
     function borrowCreditLine(uint256 amount) external {
-        if (cp.borrowed[msg.sender] > 0) {
+        if (cp.borrowed[msg.sender] == 0) {
             cp.borrowers.push(msg.sender);
         }
         cp.borrowed[msg.sender] += amount;
