@@ -58,7 +58,7 @@ contract CreditLinesPool is TrueFiPool2 {
         for (uint16 i = 0; i < cp.borrowers.length; i++) {
             address borrower = cp.borrowers[i];
             uint16 borrowerRate = rate(borrower);
-            uint256 pendingInterest = uint256(borrowerRate).mul(cp.borrowed[borrower]);
+            uint256 pendingInterest = uint256(borrowerRate).mul((cp.borrowed[borrower] + cp.interests[borrower]));
             cp.interests[borrower] = cp.interests[borrower].add(pendingInterest.mul(block.timestamp - cp.timestamp).div(365 days));
             totalPendingInterest += pendingInterest;
             interestTotal += cp.interests[borrower];

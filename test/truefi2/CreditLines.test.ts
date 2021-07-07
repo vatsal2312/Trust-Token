@@ -85,10 +85,18 @@ describe('Credit lines POC', () => {
   })
 
   it('HEAVY TEST', async () => {
+    const mkcp = async () => {
+      const tx = await (await creditLinesPool.checkpoint()).wait()
+      console.log(tx.gasUsed.toString())
+    }
     for (let i = 1; i < 50; i++) {
       await creditLinesPool.borrowCreditLine(parseEth(1e5), Wallet.createRandom().address)
     }
-    const tx = await (await creditLinesPool.checkpoint()).wait()
-    console.log(tx.gasUsed.toString())
+    await mkcp()
+    for (let i = 1; i < 50; i++) {
+      await creditLinesPool.borrowCreditLine(parseEth(1e5), Wallet.createRandom().address)
+    }
+    await mkcp()
+    await mkcp()
   }).timeout(1000000000)
 })
