@@ -76,6 +76,7 @@ contract TrueCreditAgency is UpgradeableClaimable {
 
     function setRiskPremium(uint256 newRate) external onlyOwner {
         riskPremium = newRate;
+        // TODO keep separate premiums per pool, call pool here
         emit RiskPremiumChanged(newRate);
     }
 
@@ -113,6 +114,11 @@ contract TrueCreditAgency is UpgradeableClaimable {
             return 50000; // Cap rate by 500%
         }
         return min(creditAdjustmentCoefficient.mul(MAX_CREDIT_SCORE - score).div(score), 50000);
+    }
+
+    function interest(ITrueFiPool2 pool, address borrower) external view returns (uint256) {
+        CreditScoreBucket storage bucket = buckets[pool][creditScore[pool][borrower]];
+        return _interest(pool, bucket, borrower);
     }
 
     function interest(ITrueFiPool2 pool, address borrower) external view returns (uint256) {
